@@ -79,7 +79,7 @@ GPU** (5090, 4090, A100, H100, L40S, A6000 …):
 | | |
 |---|---|
 | **GPU** | compute capability ≥ 8.0 (Ampere or newer), **≥ 24 GB VRAM** (student + Mimi + STT + retrievers + avatar ≈ 16–18 GB) |
-| **Disk** | **≥ 75 GB** on `/workspace` (weights ~19 GB + S28 student ~11 GB + STT/retrievers ~3 GB + Python env ~9 GB + HF cache) |
+| **Disk** | **≥ 50 GB** on `/workspace` (S28 student ~11 GB + STT/retrievers ~3 GB + avatar weights ~3 GB + Python env ~9 GB + HF cache; the 16 GB full-7B is skipped by default — see `SKIP_BASE_LM` in the config cell) |
 | **Pod template** | a RunPod *PyTorch* or *CUDA 12* image is fine — the notebook builds its own Python 3.10 env, so the base image's Python does not matter |
 | **Exposed port** | add **8991** to the pod's *HTTP ports* if you want the RunPod proxy URL. Otherwise use the Cloudflare tunnel cell — it needs no pod configuration |
 | **HF token** | a Hugging Face token whose account has **accepted the licence of `nvidia/personaplex-7b-v1`** (gated — accept it on the model page first, or the weight download fails) |
@@ -118,6 +118,11 @@ TEXT_PROMPT = ("You are Robert, an assistant from RB Labs. You have knowledge ab
                "finance, investment, technology, and general topics. Answer every question "
                "completely, descriptively, and with useful detail.")
 RETRIEVER = "hybrid"                      # hybrid | local | web
+
+# Disk saver for the RAG config: skip the 16 GB full-7B model.safetensors from the base repo
+# (only the legacy run_x86.sh config needs it; the RAG student does not). This brings the
+# download from ~33 GB to ~17 GB. Set to "0" if you also want the legacy full-PersonaPlex config.
+os.environ["SKIP_BASE_LM"] = "1"
 
 # Hugging Face token, in order of preference:
 #   1. the HF_TOKEN environment variable (set it in the pod's env vars - best on a shared pod)
@@ -340,10 +345,13 @@ sh("./env/bin/python -c 'import sphn, tensorrt, hf_transfer, huggingface_hub, tr
 # __TAIL__
 
 
-CELLS.append(md("cell-25", """## 7 · Download the weights and build the TensorRT engine  *(~20–50 min, ~33 GB)*
+CELLS.append(md("cell-25", """## 7 · Download the weights and build the TensorRT engine  *(~15–40 min, ~17 GB)*
 
 1. environment check
-2. `nvidia/personaplex-7b-v1` — bf16 trunk, Mimi codec, tokenizer, voices (**gated**, ~16 GB)
+2. `nvidia/personaplex-7b-v1` — **Mimi codec + voices only** (~1 GB, **gated**). With
+   `SKIP_BASE_LM=1` (the default) the 16 GB full-7B `model.safetensors` is **not** downloaded —
+   the RAG student does not use it. Set `SKIP_BASE_LM=0` in the config cell if you also want the
+   legacy full-PersonaPlex config.
 3. the Robert_5 one-pass depformer + GAN Mimi decoder (~2.9 GB, public, sha256-checked) — *legacy config*
 4. avatar weights, the Robert_5 voice and the decoder ONNX (~250 MB, public, sha256-checked)
 5. **the RAG assets**: the S28 student (~11 GB, `sadmN/moshi-s28-rag`), the STT

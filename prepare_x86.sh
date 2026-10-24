@@ -51,19 +51,28 @@ if [ "${HF_HUB_ENABLE_HF_TRANSFER:-0}" != "0" ] && ! "$PY" -c 'import hf_transfe
   export HF_HUB_ENABLE_HF_TRANSFER=0
 fi
 
-log "2/7  base model from $BASE_REPO (~16 GB, gated: needs your token + accepted licence)"
+# SKIP_BASE_LM=1 skips the 16 GB full-7B model.safetensors + the legacy text tokenizer:
+# the RAG config (run_x86_rag.sh) only needs the Mimi codec + the voices from this repo.
+# The legacy config (run_x86.sh) needs the full download, so keep the default at 0 there.
+SKIP_BASE_LM="${SKIP_BASE_LM:-0}"
+if [ "$SKIP_BASE_LM" = "1" ]; then
+  BASE_PATS='["tokenizer-e351c8d8-checkpoint125.safetensors", "voices.tgz"]'
+  log "2/7  base Mimi + voices from $BASE_REPO (SKIP_BASE_LM=1: RAG-only, no 16 GB full-7B)"
+else
+  BASE_PATS='["model.safetensors", "tokenizer-e351c8d8-checkpoint125.safetensors", "tokenizer_spm_32k_3.model", "voices.tgz"]'
+  log "2/7  base model from $BASE_REPO (~16 GB, gated: needs your token + accepted licence)"
+fi
 "$PY" - <<PYEOF || die "base download failed: is the token valid and the model licence accepted on HF?"
 import os
 from huggingface_hub import snapshot_download
 p = snapshot_download("$BASE_REPO", revision="$BASE_REV", token=os.environ.get("HF_TOKEN"),
-                      allow_patterns=["model.safetensors", "tokenizer-e351c8d8-checkpoint125.safetensors",
-                                      "tokenizer_spm_32k_3.model", "voices.tgz"])
+                      allow_patterns=$BASE_PATS)
 open(os.path.join("$HERE", ".snap_path"), "w").write(p); print("    ->", p)
 PYEOF
 SNAP="$(cat "$HERE/.snap_path")"
 mkdir -p "$W"
 ln -sfn "$SNAP/tokenizer-e351c8d8-checkpoint125.safetensors" "$W/mimi.safetensors"
-ln -sfn "$SNAP/tokenizer_spm_32k_3.model" "$W/tokenizer_spm_32k_3.model"
+[ "$SKIP_BASE_LM" = "1" ] || ln -sfn "$SNAP/tokenizer_spm_32k_3.model" "$W/tokenizer_spm_32k_3.model"
 [ -d "$W/voices" ] || tar xzf "$SNAP/voices.tgz" -C "$W"
 [ -s "$W/voices/NATM0.pt" ] || die "voices.tgz did not contain voices/NATM0.pt"
 

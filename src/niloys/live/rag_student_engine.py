@@ -92,6 +92,17 @@ class RAGConfig:
     web_provider: str = "tavily"      # tavily | brave | ddg
     web_api_key: str | None = None
     web_timeout: float = 4.0
+    web_max_results: int = 3
+    web_wait_frames: int = 8          # pause frames spent waiting for an in-flight search
+    web_trigger_below: float = 1.1    # search the web when the local top score is below this
+    stt_hf_repo: str = "kyutai/stt-1b-en_fr-candle"
+    vad_threshold: float = 0.5
+    max_ref_tokens: int = 256
+    ref_tokens_per_slot: int = 4
+    idle_pad_limit: int = 25          # 2 s of pads ends the turn
+    barge_in_frames: int = 4          # user speech frames that interrupt the model
+    vad_silence_frames: int = 12      # ~1 s of VAD silence ends the user utterance
+    warmup_steps: int = 4
 
 
 # ---------------------------------------------------------------------------
