@@ -22,6 +22,7 @@ W="$HERE/weights"
 BASE_REPO=nvidia/personaplex-7b-v1
 BASE_REV=fdaf4090a61cb315c138a1faee287ffd6c716309
 OURS_REPO=niloy629/personaplex-parallel-depformer
+RAG_REPO=sadmN/moshi-s28-rag
 log(){ printf '\n\033[1m==> %s\033[0m\n' "$*"; }
 warn(){ printf '\033[33mWARNING: %s\033[0m\n' "$*" >&2; }
 die(){ printf '\033[31mERROR: %s\033[0m\n' "$*" >&2; exit 1; }
@@ -103,7 +104,6 @@ ln -sfn "$HERE/assets/Robert_5.pt" "$W/voices/Robert_5.pt"
 log "5/7  RAG assets: S28 student from $RAG_REPO (~11 GB) + STT + retrievers (~3 GB)"
 # The S28 RAG student (pruned 12.5 Hz PersonaPlex backbone) is what ./run_x86_rag.sh
 # serves; the tokenizer + local retrieval index ship in this repo under rag/.
-RAG_REPO=sadmN/moshi-s28-rag
 RAG_DIR="$HERE/rag"
 RAG_CKPT="$RAG_DIR/ckpt/rag_S28/step_1800"
 [ -s "$RAG_DIR/tokenizer.model" ] || die "rag/tokenizer.model missing -- the repo is incomplete"
