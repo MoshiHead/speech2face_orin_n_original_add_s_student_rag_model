@@ -267,6 +267,15 @@ if need_zip:
     shutil.rmtree(tmp, ignore_errors=True)
 
 for rel in ["src/moshi_local/moshi_distill/models/lm.py",
+            "src/moshi_local/moshi_distill/models/loaders.py",
+            "src/moshi_local/moshi_distill/modules/transformer.py",
+            "src/moshi_local/moshi_distill/modules/sticky_latent_kv.py",
+            "src/moshi_local/moshi_distill/client_utils.py",
+            "src/moshi_local/moshi_distill/interleaver.py",
+            "src/moshi_local/moshi_distill/rag_ref_select.py",
+            "src/moshi_local/moshi_distill/ref_adapter.py",
+            "src/moshi_local/moshi_distill/eval_retrieval.py",
+            "src/moshi_local/moshi_distill/rag_index_v3.py",
             "src/niloys/live/rag_student_engine.py",
             "src/niloys/live/imtalker_rag_student_live.py",
             "rag/tokenizer.model",
